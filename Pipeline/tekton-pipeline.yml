@@ -1,0 +1,92 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  creationTimestamp: '2022-07-05T10:36:46Z'
+  generation: 14
+  managedFields:
+    - apiVersion: tekton.dev/v1beta1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:finally': {}
+          'f:params': {}
+          'f:resources': {}
+          'f:tasks': {}
+          'f:workspaces': {}
+      manager: Mozilla
+      operation: Update
+      time: '2022-07-05T10:36:46Z'
+  name: create-oc-cicd
+  namespace: oc-cicd
+  resourceVersion: '419474939'
+  uid: ebc6ed13-3a5e-4da3-bdfe-bb73f5db9c54
+spec:
+  finally:
+    - name: kn-apply
+      params:
+        - name: KN_IMAGE
+          value: >-
+            registry.redhat.io/openshift-serverless-1/client-kn-rhel8@sha256:286f6b4c008307df1bc369891ef9e806050d3a5f5e77ee0c9313ffdb350abbcb
+        - name: SERVICE
+          value: oc-cicd-example
+        - name: IMAGE
+          value: >-
+            image-registry.openshift-image-registry.svc:5000/oc-cicd/oc-cicd-example
+      taskRef:
+        kind: ClusterTask
+        name: kn-apply
+  tasks:
+    - name: git-clone
+      params:
+        - name: url
+          value: 'https://github.com/zeronyk/OC_CICD'
+        - name: submodules
+          value: 'true'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'true'
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8@sha256:da1aedf0b17f2b9dd2a46edc93ff1c0582989414b902a28cd79bad8a035c9ea4
+        - name: userHome
+          value: /tekton/home
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: pipeline-pvc
+    - name: buildah-1-5-0
+      params:
+        - name: IMAGE
+          value: >-
+            image-registry.openshift-image-registry.svc:5000/oc-cicd/oc-cicd-example
+        - name: BUILDER_IMAGE
+          value: >-
+            registry.redhat.io/rhel8/buildah@sha256:99cae35f40c7ec050fed3765b2b27e0b8bbea2aa2da7c16408e2ca13c60ff8ee
+        - name: STORAGE_DRIVER
+          value: vfs
+        - name: DOCKERFILE
+          value: ./resource/Dockerfile
+        - name: CONTEXT
+          value: ./resource/
+        - name: TLSVERIFY
+          value: 'false'
+        - name: FORMAT
+          value: oci
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: ClusterTask
+        name: buildah-1-5-0
+      workspaces:
+        - name: source
+          workspace: pipeline-pvc
+  workspaces:
+    - name: pipeline-pvc
