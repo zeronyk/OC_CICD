@@ -5,7 +5,7 @@
  apiVersion: tekton.dev/v1beta1
  kind: PipelineRun
  metadata:
-   name: pipeline-run-test
+   name: pipeline-run-test-ocp2
  spec:
    serviceAccountName: pipeline
    pipelineRef:
@@ -21,7 +21,11 @@
               storage: 1Gi
    params:
    - name: GIT_URL
-     value: https://github.com/zeronyk/OC_CICD
+     value: https://github.com/mgiessing/ocp-fastapi-example.git
    - name: GIT_REVISION
      value: main
+   - name: DOCKER_PATH
+     value: ./
+   - name: DOCKER_CONTEXT
+     value: ./
   

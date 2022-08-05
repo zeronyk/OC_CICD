@@ -75,7 +75,29 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-pvc
-    - name: deploy
+    - name: deploy-pod
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      runAfter:
+        - build-and-push
+      params:
+        - name: SCRIPT
+          value: |
+            oc new-app $(params.IMAGE_NAME)
+
+    - name: deploy-service
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      runAfter:
+        - build-and-push
+      params:
+        - name: SCRIPT
+          value: |
+            oc new-app $(params.IMAGE_NAME)
+
+    - name: deploy-route
       taskRef:
         name: openshift-client
         kind: ClusterTask
