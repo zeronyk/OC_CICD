@@ -86,26 +86,17 @@ spec:
           value: |
             oc new-app $(params.IMAGE_NAME)
 
-    - name: deploy-service
+    - name: create-outside-route
       taskRef:
         name: openshift-client
         kind: ClusterTask
       runAfter:
-        - build-and-push
+        - deploy-pod
       params:
         - name: SCRIPT
           value: |
-            oc new-app $(params.IMAGE_NAME)
+            oc create route edge --service=oc-cicd-example --insecure-policy=Redirect --hostname=oc-cicd-example.161.156.154.27.nip.io
 
-    - name: deploy-route
-      taskRef:
-        name: openshift-client
-        kind: ClusterTask
-      runAfter:
-        - build-and-push
-      params:
-        - name: SCRIPT
-          value: |
-            oc new-app $(params.IMAGE_NAME)
+ 
   workspaces:
     - name: pipeline-pvc
