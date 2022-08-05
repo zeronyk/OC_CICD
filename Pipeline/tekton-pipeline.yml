@@ -1,46 +1,33 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  creationTimestamp: '2022-07-05T10:36:46Z'
-  generation: 14
-  managedFields:
-    - apiVersion: tekton.dev/v1beta1
-      fieldsType: FieldsV1
-      fieldsV1:
-        'f:spec':
-          .: {}
-          'f:finally': {}
-          'f:params': {}
-          'f:resources': {}
-          'f:tasks': {}
-          'f:workspaces': {}
-      manager: Mozilla
-      operation: Update
-      time: '2022-07-05T10:36:46Z'
-  name: create-oc-cicd
+  name: oc-cicd-pipeline
   namespace: oc-cicd
-  resourceVersion: '419474939'
-  uid: ebc6ed13-3a5e-4da3-bdfe-bb73f5db9c54
 spec:
-  finally:
-    - name: kn-apply
-      params:
-        - name: KN_IMAGE
-          value: >-
-            registry.redhat.io/openshift-serverless-1/client-kn-rhel8@sha256:286f6b4c008307df1bc369891ef9e806050d3a5f5e77ee0c9313ffdb350abbcb
-        - name: SERVICE
-          value: oc-cicd-example
-        - name: IMAGE
-          value: >-
-            image-registry.openshift-image-registry.svc:5000/oc-cicd/oc-cicd-example
-      taskRef:
-        kind: ClusterTask
-        name: kn-apply
+  params:
+  - name: IMAGE_NAME
+    type: string
+    default: image-registry.openshift-image-registry.svc:5000/oc-cicd/oc-cicd-example
+  - name: GIT_REVISION
+    type: string
+    default: master
+  - name: GIT_URL
+    type: string
+    default: https://github.com/zeronyk/OC_CICD
+  - name: DOCKER_PATH
+    type: string
+    default: ./resource/Dockerfile
+  - name: DOCKER_CONTEXT
+    type: string
+    default: ./resource/   
+  - name: SERVICE_NAME
+    type: string
+    default: oc-cicd-service 
   tasks:
     - name: git-clone
       params:
         - name: url
-          value: 'https://github.com/zeronyk/OC_CICD'
+          value: $(params.GIT_URL)
         - name: submodules
           value: 'true'
         - name: depth
@@ -62,7 +49,7 @@ spec:
       workspaces:
         - name: output
           workspace: pipeline-pvc
-    - name: buildah-1-5-0
+    - name: build-and-push
       params:
         - name: IMAGE
           value: >-
@@ -73,9 +60,9 @@ spec:
         - name: STORAGE_DRIVER
           value: vfs
         - name: DOCKERFILE
-          value: ./resource/Dockerfile
+          value: $(params.DOCKER_PATH)
         - name: CONTEXT
-          value: ./resource/
+          value: $(params.DOCKER_CONTEXT)
         - name: TLSVERIFY
           value: 'false'
         - name: FORMAT
@@ -88,5 +75,15 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-pvc
+    - name: deploy
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      runAfter:
+        - build-and-push
+      params:
+        - name: SCRIPT
+          value: |
+            oc new-app $(params.IMAGE_NAME)
   workspaces:
     - name: pipeline-pvc

@@ -1,0 +1,16 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: oc-cicd-pipeline-binding
+spec:
+  params:
+  - name: URL
+    value: $(body.repository.clone_url)
+  - name: REVISION
+    value: $(body.pull_request.head.sha)
+  - name: NAMESPACE
+    value: oc-cicd
+  - name: DEPLOYMENT
+    value: oc-cicd
+  - name: SERVICE_ACCOUNT
+    value: pipeline

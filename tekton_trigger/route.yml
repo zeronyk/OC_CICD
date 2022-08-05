@@ -1,0 +1,21 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    eventlistener: oc-cicd-event-listener
+  name: oc-cicd-event-listener
+spec:
+  host: oc-cicd.161.156.154.27.nip.io
+  port:
+    targetPort: http-listener
+  to:
+    kind: Service
+    name: oc-cicd-event-listener
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+
+  wildcardPolicy: None
+
+
+  

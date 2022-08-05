@@ -1,0 +1,27 @@
+ #NAMESPACE='catapp'
+ #URL='https://github.com/ncskier/catapp.git' # Replace with your catapp repository url
+ #REVISION='master'
+ #cat << EOF | oc apply -f -
+ apiVersion: tekton.dev/v1beta1
+ kind: PipelineRun
+ metadata:
+   name: pipeline-run-test
+ spec:
+   serviceAccountName: pipeline
+   pipelineRef:
+     name: oc-cicd-pipeline
+   workspaces:
+    - name: pipeline-pvc # this workspace name must be declared in the Pipeline
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce # access mode may affect how you can use this volume in parallel tasks
+          resources:
+            requests:
+              storage: 1Gi
+   params:
+   - name: GIT_URL
+     value: https://github.com/zeronyk/OC_CICD
+   - name: GIT_REVISION
+     value: main
+  
